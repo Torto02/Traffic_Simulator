@@ -1,0 +1,25 @@
+Metadata-Version: 2.4
+Name: trafficSimulator
+Version: 0.0.1
+Summary: A microscopic traffic simulation in Python
+Author-email: Bilal Himite <mail.bilalhimite@gmail.com>
+Project-URL: Homepage, https://github.com/BilHim/trafficSimulator
+Project-URL: Bug Reports, https://github.com/BilHim/trafficSimulator/issues
+Project-URL: Funding, https://ko-fi.com/bilhim
+Project-URL: Say Thanks!, https://saythanks.io/to/BilHim
+Project-URL: Source, https://github.com/BilHim/trafficSimulator/
+Keywords: traffic,setuptools,development
+Classifier: Development Status :: 3 - Alpha
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3 :: Only
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: dearpygui
