@@ -1,8 +1,13 @@
 MANIFEST.in
 pyproject.toml
 requirements.txt
+examples/config_city.json
+examples/config_sample.json
+examples/test2.py
+examples/test_config.py
 examples/test_twoway_segments.py
 src/trafficSimulator/__init__.py
+src/trafficSimulator/config.py
 src/trafficSimulator.egg-info/PKG-INFO
 src/trafficSimulator.egg-info/SOURCES.txt
 src/trafficSimulator.egg-info/dependency_links.txt

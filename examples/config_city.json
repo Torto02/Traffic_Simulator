@@ -1,0 +1,158 @@
+{
+  "ui": {
+    "title": "Campus District Demo",
+    "width": 1280,
+    "height": 720,
+    "background_color": [240, 245, 250]
+  },
+  "segments": [
+    {
+      "id": "main_e",
+      "type": "segment",
+      "points": [
+        [-150, 0],
+        [0, 0],
+        [150, 0]
+      ],
+      "category": "general",
+      "material": "asphalt",
+      "width": 4.0,
+      "direction_hint": true
+    },
+    {
+      "id": "main_w",
+      "type": "segment",
+      "points": [
+        [150, -6],
+        [0, -6],
+        [-150, -6]
+      ],
+      "category": "bus",
+      "material": "concrete",
+      "width": 4.5,
+      "direction_hint": true
+    },
+    {
+      "id": "north",
+      "type": "segment",
+      "points": [
+        [0, 0],
+        [0, 120]
+      ],
+      "category": "general",
+      "material": "asphalt",
+      "width": 3.5,
+      "direction_hint": true
+    },
+    {
+      "id": "south",
+      "type": "segment",
+      "points": [
+        [-6, -6],
+        [-6, -120]
+      ],
+      "category": "general",
+      "material": "asphalt",
+      "width": 3.5,
+      "direction_hint": true
+    },
+    {
+      "id": "park_lane",
+      "type": "segment",
+      "points": [
+        [-60, 30],
+        [-20, 30],
+        [20, 30],
+        [60, 20]
+      ],
+      "category": "taxi",
+      "material": "asphalt",
+      "width": 3.0,
+      "direction_hint": true
+    }
+  ],
+  "vehicle_generators": [
+    {
+      "vehicle_rate": 25,
+      "vehicles": [
+        [12, { "path": ["main_e"], "v": 15.0, "vehicle_class": "vehicle" }],
+        [4, { "path": ["main_e", "north"], "v": 14.0, "vehicle_class": "ev" }],
+        [3, { "path": ["main_w"], "v": 13.0, "vehicle_class": "bus", "l": 8 }],
+        [
+          2,
+          {
+            "path": ["park_lane"],
+            "v": 12.0,
+            "vehicle_class": "taxi",
+            "shape": "triangle"
+          }
+        ]
+      ]
+    }
+  ],
+  "vehicles": [],
+  "environment": [
+    { "type": "tree", "position": [-40, 40], "size": 3.5 },
+    { "type": "tree", "position": [40, 40], "size": 3.5 },
+    { "type": "lamp", "position": [0, -20], "size": 2.5 },
+    {
+      "type": "building",
+      "position": [90, 35],
+      "size": 5.5,
+      "color": [185, 185, 210]
+    },
+    {
+      "type": "building",
+      "position": [-90, 35],
+      "size": 5.5,
+      "color": [185, 185, 210]
+    },
+    { "type": "rsu", "position": [0, 0], "size": 2.5 },
+    { "type": "vru", "position": [15, 10], "size": 2 }
+  ],
+  "events": [
+    {
+      "id": "works_main_e",
+      "type": "works",
+      "segment_id": "main_e",
+      "offset": 0.55,
+      "start_time": 10,
+      "duration": 120,
+      "speed_factor": 0.5,
+      "size": 2
+    },
+    {
+      "id": "accident_north",
+      "type": "accident",
+      "segment_id": "north",
+      "offset": 0.3,
+      "start_time": 25,
+      "duration": 90,
+      "speed_factor": 0.3,
+      "size": 2.2
+    }
+  ],
+  "junctions": [
+    {
+      "id": "main_cross",
+      "approaches": [
+        {
+          "segment_id": "main_e",
+          "offset": 0.5,
+          "type": "light",
+          "green": 20,
+          "red": 20
+        },
+        {
+          "segment_id": "main_w",
+          "offset": 0.5,
+          "type": "light",
+          "green": 20,
+          "red": 20
+        },
+        { "segment_id": "north", "offset": 0.0, "type": "yield" },
+        { "segment_id": "south", "offset": 1.0, "type": "yield" }
+      ]
+    }
+  ]
+}

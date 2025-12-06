@@ -3,7 +3,7 @@ from .segment import Segment
 CURVE_RESOLUTION = 50
 
 class CubicCurve(Segment):
-    def __init__(self, start, control_1, control_2, end):
+    def __init__(self, start, control_1, control_2, end, **metadata):
         # Store characteristic points
         self.start = start
         self.control_1 = control_1
@@ -18,10 +18,10 @@ class CubicCurve(Segment):
             y = t**3*self.end[1] + 3*t**2*(1-t)*self.control_2[1] + 3*(1-t)**2*t*self.control_1[1] + (1-t)**3*self.start[1]
             path.append((x, y))
 
-        super().__init__(path)
+        super().__init__(path, **metadata)
         # Arc-length parametrization
         normalized_path = self.find_normalized_path(CURVE_RESOLUTION)
-        super().__init__(normalized_path)
+        super().__init__(normalized_path, **metadata)
 
     def compute_x(self, t):
         return t**3*self.end[0] + 3*t**2*(1-t)*self.control_2[0] + 3*(1-t)**2*t*self.control_1[0] + (1-t)**3*self.start[0]

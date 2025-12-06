@@ -6,10 +6,44 @@ from abc import ABC, abstractmethod
 from math import sqrt
 from scipy.integrate import quad
 
+
+# Basic style defaults for road categories and materials.
+DEFAULT_SEGMENT_CATEGORY = "general"
+DEFAULT_SEGMENT_MATERIAL = "asphalt"
+
+CATEGORY_STYLES = {
+    "general": {"color": (180, 180, 220), "width": 3.5},
+    "highway": {"color": (180, 200, 220), "width": 3.5},
+    "taxi": {"color": (255, 215, 0), "width": 3.5},
+    "bus": {"color": (0, 91, 140), "width": 4.0},
+    "reserved": {"color": (220, 120, 120), "width": 3.5},
+}
+
+MATERIAL_STYLES = {
+    "asphalt": {},
+    "concrete": {"color": (200, 200, 200)},
+    "gravel": {"color": (190, 180, 150)},
+    "dirt": {"color": (170, 140, 100)},
+}
+
 class Segment(ABC):
-    def __init__(self, points):
+    def __init__(self, points, **metadata):
         self.points = points
         self.vehicles = deque()
+
+        # Metadata with safe defaults for backward compatibility.
+        self.id = metadata.get("id")
+        self.category = metadata.get("category", DEFAULT_SEGMENT_CATEGORY)
+        self.material = metadata.get("material", DEFAULT_SEGMENT_MATERIAL)
+        self.max_speed = metadata.get("max_speed", None)
+        self.width = metadata.get("width", CATEGORY_STYLES.get(self.category, {}).get("width", 3.5))
+        self.color = metadata.get("color", CATEGORY_STYLES.get(self.category, {}).get("color", (180, 180, 220)))
+        self.direction_hint = metadata.get("direction_hint", True)
+
+        # Allow material to override color if provided and no explicit color was set.
+        if "color" not in metadata:
+            material_style = MATERIAL_STYLES.get(self.material, {})
+            self.color = material_style.get("color", self.color)
 
         self.set_functions()
         

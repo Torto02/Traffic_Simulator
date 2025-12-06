@@ -7,3 +7,4 @@ from .core.vehicle_generator import VehicleGenerator
 
 from .core.simulation import Simulation
 from .visualizer.window import Window
+from .config import load_config, build_simulation, load_simulation_from_json

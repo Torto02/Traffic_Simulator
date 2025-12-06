@@ -1,0 +1,31 @@
+{
+  "ui": {
+    "title": "Campus District Demo",
+    "width": 1280,
+    "height": 720,
+    "background_color": [240, 245, 250]
+  },
+  "segments": [
+    {
+      "id": "tangenziale",
+      "type": "segment",
+      "start": [-150, 0],
+      "end": [150, 0],
+      "category": "highway",
+      "material": "asphalt",
+      "width": 4.0,
+      "direction_hint": true
+    },
+    {
+      "id": "curva tangenziale",
+      "type": "quadratic",
+      "start": [150, 0],
+      "control": [200, -50],
+      "end": [150, -100],
+      "category": "highway",
+      "material": "asphalt",
+      "width": 4.0,
+      "direction_hint": true
+    }
+  ]
+}

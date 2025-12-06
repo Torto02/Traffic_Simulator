@@ -39,6 +39,9 @@ class VehicleGenerator:
             print('adding vehicle')
             # If time elasped after last added vehicle is
             # greater than vehicle_period; generate a vehicle
+            # Resolve path (ids or indices) before accessing simulation segments.
+            self.upcoming_vehicle.path = simulation.resolve_path(self.upcoming_vehicle.path)
+
             segment = simulation.segments[self.upcoming_vehicle.path[0]]      
             if len(segment.vehicles) == 0\
                or simulation.vehicles[segment.vehicles[-1]].x > self.upcoming_vehicle.s0 + self.upcoming_vehicle.l:

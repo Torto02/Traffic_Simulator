@@ -4,7 +4,7 @@ PAS = 0.01
 CURVE_RESOLUTION = 50
 
 class QuadraticCurve(Segment):
-    def __init__(self, start, control, end):
+    def __init__(self, start, control, end, **metadata):
         # Store characteristic points
         self.start = start
         self.control = control
@@ -18,11 +18,11 @@ class QuadraticCurve(Segment):
             y = t**2*self.end[1] + 2*t*(1-t)*self.control[1] + (1-t)**2*self.start[1]
             path.append((x, y))
 
-        super().__init__(path)
+        super().__init__(path, **metadata)
 
         # Arc-length parametrization
         normalized_path = self.find_normalized_path(CURVE_RESOLUTION)
-        super().__init__(normalized_path)
+        super().__init__(normalized_path, **metadata)
 
     def compute_x(self, t):
         return t**2*self.end[0] + 2*t*(1-t)*self.control[0] + (1-t)**2*self.start[0]

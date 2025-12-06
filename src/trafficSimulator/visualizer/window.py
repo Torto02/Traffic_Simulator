@@ -1,13 +1,25 @@
 import dearpygui.dearpygui as dpg
+from math import cos, sin
 
 
 class Window:
-    def __init__(self, simulation):
+    def __init__(self, simulation, ui_config=None):
         self.simulation = simulation
+
+        ui_config = ui_config or {}
+        self.viewport_title = ui_config.get("title", "TrafficSimulator")
+        self.viewport_width = ui_config.get("width", 1280)
+        self.viewport_height = ui_config.get("height", 720)
+        self.background_color = tuple(ui_config.get("background_color", (250, 250, 250)))
 
         self.zoom = 7
         self.offset = (0, 0)
         self.speed = 1
+
+        # Layer visibility
+        self.show_environment = True
+        self.show_events = True
+        self.show_arrows = True
 
         self.is_running = False
 
@@ -23,7 +35,7 @@ class Window:
 
     def setup(self):
         dpg.create_context()
-        dpg.create_viewport(title="TrafficSimulator", width=1280, height=720)
+        dpg.create_viewport(title=self.viewport_title, width=self.viewport_width, height=self.viewport_height)
         dpg.setup_dearpygui()
 
     def setup_themes(self):
@@ -103,6 +115,14 @@ class Window:
                     with dpg.table_row():
                         dpg.add_text("Frame:")
                         dpg.add_text("_", tag="FrameStatus")
+
+                    with dpg.table_row():
+                        dpg.add_text("Vehicles:")
+                        dpg.add_text("_", tag="VehicleCount")
+
+                    with dpg.table_row():
+                        dpg.add_text("Active events:")
+                        dpg.add_text("_", tag="ActiveEvents")
             
             
             with dpg.collapsing_header(label="Camera Control", default_open=True):
@@ -111,6 +131,11 @@ class Window:
                 with dpg.group():
                     dpg.add_slider_float(tag="OffsetXSlider", label="X Offset", min_value=-100, max_value=100, default_value=self.offset[0], callback=self.set_offset_zoom)
                     dpg.add_slider_float(tag="OffsetYSlider", label="Y Offset", min_value=-100, max_value=100, default_value=self.offset[1], callback=self.set_offset_zoom)
+
+            with dpg.collapsing_header(label="Layers", default_open=True):
+                dpg.add_checkbox(label="Show environment", default_value=self.show_environment, callback=self.toggle_environment, tag="EnvToggle")
+                dpg.add_checkbox(label="Show events", default_value=self.show_events, callback=self.toggle_events, tag="EventsToggle")
+                dpg.add_checkbox(label="Show arrows", default_value=self.show_arrows, callback=self.toggle_arrows, tag="ArrowsToggle")
 
     def resize_windows(self):
         width = dpg.get_viewport_width()
@@ -144,6 +169,11 @@ class Window:
         # Update time and frame text
         dpg.set_value("TimeStatus", f"{self.simulation.t:.2f}s")
         dpg.set_value("FrameStatus", self.simulation.frame_count)
+
+        # Update counts
+        dpg.set_value("VehicleCount", len(self.simulation.vehicles))
+        active_events = len(getattr(self.simulation, "active_event_ids", []))
+        dpg.set_value("ActiveEvents", active_events)
 
         
 
@@ -209,12 +239,13 @@ class Window:
         return dpg.get_item_height("MainWindow")
 
 
-    def draw_bg(self, color=(250, 250, 250)):
+    def draw_bg(self, color=None):
+        bg = color if color is not None else self.background_color
         dpg.draw_rectangle(
             (-10, -10),
             (self.canvas_width+10, self.canvas_height+10), 
             thickness=0,
-            fill=color,
+            fill=bg,
             parent="OverlayCanvas"
         )
 
@@ -265,8 +296,22 @@ class Window:
 
     def draw_segments(self):
         for segment in self.simulation.segments:
-            dpg.draw_polyline(segment.points, color=(180, 180, 220), thickness=3.5*self.zoom, parent="Canvas")
-            #dpg.draw_arrow(segment.points[-1], segment.points[-2], thickness=0, size=2, color=(0, 0, 0, 50), parent="Canvas")
+            color = segment.color if hasattr(segment, "color") else (180, 180, 220)
+            thickness = (segment.width if hasattr(segment, "width") else 3.5) * self.zoom
+            dpg.draw_polyline(segment.points, color=color, thickness=thickness, parent="Canvas")
+
+            # Direction hint: arrow along the segment centerline to show flow.
+            if getattr(segment, "direction_hint", True) and len(segment.points) >= 2:
+                if not self.show_arrows:
+                    continue
+                mid_point = segment.get_point(0.5)
+                heading = segment.get_heading(0.5)
+                arrow_len = max(2.5, (segment.width if hasattr(segment, "width") else 3.5) * 1.1)
+                dx = cos(heading) * arrow_len
+                dy = sin(heading) * arrow_len
+                start = (mid_point[0] - dx * 0.5, mid_point[1] - dy * 0.5)
+                end = (mid_point[0] + dx * 0.5, mid_point[1] + dy * 0.5)
+                dpg.draw_arrow(start, end, thickness=0, size=arrow_len*0.35, color=(0, 0, 0, 80), parent="Canvas")
 
     def draw_vehicles(self):
         for segment in self.simulation.segments:
@@ -278,17 +323,122 @@ class Window:
                 heading = segment.get_heading(progress)
 
                 node = dpg.add_draw_node(parent="Canvas")
-                dpg.draw_line(
-                    (0, 0),
-                    (vehicle.l, 0),
-                    thickness=1.76*self.zoom,
-                    color=(0, 0, 255),
-                    parent=node
-                )
+
+                color = getattr(vehicle, "color", (0, 0, 255))
+                thickness = 1.2 * self.zoom
+                half_len = vehicle.l / 2
+                half_width = vehicle.l / 4
+
+                # Simple shapes per vehicle class; renderer can be extended later.
+                if vehicle.shape == "triangle":
+                    tip = (half_len, 0)
+                    rear_left = (-half_len, half_width)
+                    rear_right = (-half_len, -half_width)
+                    dpg.draw_triangle(tip, rear_left, rear_right, color=color, fill=color, thickness=thickness, parent=node)
+                elif vehicle.shape == "circle":
+                    dpg.draw_circle(center=(0, 0), radius=half_len * 0.6, color=color, fill=color, thickness=thickness, parent=node)
+                else:  # default rectangle
+                    dpg.draw_rectangle((-half_len, -half_width), (half_len, half_width), color=color, fill=color, thickness=thickness, parent=node)
 
                 translate = dpg.create_translation_matrix(position)
                 rotate = dpg.create_rotation_matrix(heading, [0, 0, 1])
                 dpg.apply_transform(node, translate*rotate)
+
+    def draw_events(self):
+        if not self.show_events:
+            return
+        for ev in getattr(self.simulation, "events", []):
+            if not ev.get("active", False):
+                continue
+
+            ev_type = ev.get("type", "event")
+            color = tuple(ev.get("color", {
+                "accident": (220, 20, 60),
+                "works": (255, 140, 0),
+                "animal": (139, 69, 19),
+            }.get(ev_type, (0, 0, 0))))
+
+            pos = ev.get("position")
+            if pos is None and ev.get("segment_id") is not None:
+                seg_id = ev.get("segment_id")
+                offset = ev.get("offset", 0.5)
+                seg_idx = self.simulation.segment_by_id.get(seg_id)
+                if seg_idx is not None:
+                    seg = self.simulation.segments[seg_idx]
+                    pos = seg.get_point(offset)
+            if pos is None:
+                pos = (0, 0)
+
+            size = ev.get("size", 3)
+            parent = "Canvas"
+
+            if ev_type == "accident":
+                dpg.draw_circle(pos, radius=size*0.6, color=color, fill=color, thickness=max(1.0, 0.8*self.zoom), parent=parent)
+                dpg.draw_line((pos[0]-size, pos[1]-size), (pos[0]+size, pos[1]+size), color=(255,255,255), thickness=max(1.0, 0.8*self.zoom), parent=parent)
+                dpg.draw_line((pos[0]-size, pos[1]+size), (pos[0]+size, pos[1]-size), color=(255,255,255), thickness=max(1.0, 0.8*self.zoom), parent=parent)
+            elif ev_type == "works":
+                dpg.draw_triangle((pos[0], pos[1]-size), (pos[0]-size, pos[1]+size), (pos[0]+size, pos[1]+size), color=color, fill=color, thickness=max(1.0, 0.8*self.zoom), parent=parent)
+                dpg.draw_line((pos[0]-size*0.6, pos[1]+size*0.3), (pos[0]+size*0.6, pos[1]+size*0.3), color=(255, 215, 0), thickness=max(1.0, 0.8*self.zoom), parent=parent)
+            elif ev_type == "animal":
+                dpg.draw_circle(pos, radius=size*0.6, color=color, fill=color, thickness=max(1.0, 0.8*self.zoom), parent=parent)
+                dpg.draw_circle((pos[0]-size*0.6, pos[1]-size*0.4), radius=size*0.25, color=color, fill=color, thickness=max(1.0, 0.8*self.zoom), parent=parent)
+                dpg.draw_circle((pos[0]+size*0.6, pos[1]-size*0.4), radius=size*0.25, color=color, fill=color, thickness=max(1.0, 0.8*self.zoom), parent=parent)
+            else:
+                dpg.draw_circle(pos, radius=size*0.5, color=color, fill=color, thickness=max(1.0, 0.8*self.zoom), parent=parent)
+
+    def draw_junctions(self):
+        # Render traffic lights (if any) at junction approaches
+        for junc in getattr(self.simulation, "junctions", {}).values():
+            for appr in junc.get("approaches", []):
+                if appr.get("type") != "light":
+                    continue
+                seg_id = appr.get("segment_id")
+                if seg_id not in self.simulation.segment_by_id:
+                    continue
+                seg_idx = self.simulation.segment_by_id[seg_id]
+                seg = self.simulation.segments[seg_idx]
+                offset = appr.get("offset", 0.5)
+                pos = seg.get_point(offset)
+                phase = appr.get("phase", "green")
+                color = (0, 180, 0) if phase == "green" else (200, 40, 40)
+                size = 1.5
+                dpg.draw_circle(pos, radius=size*self.zoom, color=color, fill=color, thickness=1.0*self.zoom, parent="Canvas")
+
+    def draw_environment(self):
+        if not self.show_environment:
+            return
+        for obj in getattr(self.simulation, "environment", []):
+            obj_type = obj.get("type", "marker")
+            pos = obj.get("position", (0, 0))
+            color = tuple(obj.get("color", (60, 60, 60)))
+            size = obj.get("size", 3)
+            parent = "Canvas"
+
+            if obj_type == "tree":
+                trunk_h = size * self.zoom
+                crown_r = size * 1.2 * self.zoom
+                # trunk
+                dpg.draw_line((pos[0], pos[1]), (pos[0], pos[1] + trunk_h), color=(120, 72, 0), thickness=1.2*self.zoom, parent=parent)
+                # crown
+                dpg.draw_circle((pos[0], pos[1] + trunk_h), radius=crown_r, color=(34, 139, 34), fill=(34, 139, 34), thickness=1.2*self.zoom, parent=parent)
+            elif obj_type == "lamp":
+                h = size * 1.5 * self.zoom
+                dpg.draw_line((pos[0], pos[1]), (pos[0], pos[1] + h), color=color, thickness=1.0*self.zoom, parent=parent)
+                dpg.draw_circle((pos[0], pos[1] + h), radius=0.4*h, color=(255, 215, 0), fill=(255, 215, 0), thickness=1.0*self.zoom, parent=parent)
+            elif obj_type == "building":
+                w = size * 2 * self.zoom
+                h = size * 2 * self.zoom
+                dpg.draw_rectangle((pos[0]-w/2, pos[1]-h/2), (pos[0]+w/2, pos[1]+h/2), color=color, fill=color, thickness=1.0*self.zoom, parent=parent)
+            elif obj_type == "rsu":
+                r = size * 0.8 * self.zoom
+                dpg.draw_circle(pos, radius=r, color=(0, 191, 255), fill=(0, 191, 255), thickness=1.0*self.zoom, parent=parent)
+                dpg.draw_circle(pos, radius=r*1.8, color=(0, 191, 255, 80), thickness=1.0*self.zoom, parent=parent)
+            elif obj_type == "vru":
+                r = size * 0.6 * self.zoom
+                dpg.draw_circle(pos, radius=r, color=(220, 20, 60), fill=(220, 20, 60), thickness=1.0*self.zoom, parent=parent)
+            else:  # generic marker
+                r = size * self.zoom
+                dpg.draw_circle(pos, radius=r, color=color, fill=color, thickness=1.0*self.zoom, parent=parent)
 
     def apply_transformation(self):
         screen_center = dpg.create_translation_matrix([self.canvas_width/2, self.canvas_height/2, -0.01])
@@ -312,6 +462,9 @@ class Window:
         self.draw_grid(unit=10)
         self.draw_grid(unit=50)
         self.draw_segments()
+        self.draw_environment()
+        self.draw_events()
+        self.draw_junctions()
         self.draw_vehicles()
 
         # Apply transformations
@@ -344,3 +497,13 @@ class Window:
     def toggle(self):
         if self.is_running: self.stop()
         else: self.run()
+
+    # Toggle handlers
+    def toggle_environment(self):
+        self.show_environment = dpg.get_value("EnvToggle")
+
+    def toggle_events(self):
+        self.show_events = dpg.get_value("EventsToggle")
+
+    def toggle_arrows(self):
+        self.show_arrows = dpg.get_value("ArrowsToggle")
