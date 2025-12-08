@@ -20,14 +20,19 @@ class Simulation:
         self.junctions = {}  # id -> junction dict
         self.segment_junctions = {}  # seg_idx -> list of approach dicts
 
+        # Routing graph (directed) built over segment endpoints
+        self.graph = {}
+        self._graph_dirty = True
+        self.graph_tol = 5e-2  # tolerance for snapping endpoints when building connectivity
+
         self.t = 0.0
         self.frame_count = 0
         self.dt = 1/60  
 
 
     def add_vehicle(self, veh):
-        # Resolve path identifiers to indices and register vehicle.
-        veh.path = self.resolve_path(veh.path)
+        # Resolve/compute path identifiers to indices and register vehicle.
+        self.prepare_vehicle_path(veh)
         self.vehicles[veh.id] = veh
         if len(veh.path) > 0:
             self.segments[veh.path[0]].add_vehicle(veh)
@@ -39,6 +44,7 @@ class Simulation:
                 raise ValueError(f"Segment id '{seg.id}' already exists")
             self.segment_by_id[seg.id] = len(self.segments)
         self.segments.append(seg)
+        self._graph_dirty = True
 
     def add_vehicle_generator(self, gen):
         self.vehicle_generator.append(gen)
@@ -78,6 +84,130 @@ class Simulation:
     def create_vehicle_generator(self, **kwargs):
         gen = VehicleGenerator(kwargs)
         self.add_vehicle_generator(gen)
+
+    def _point_key(self, pt, tol):
+        """Quantize a point to an integer grid to detect connectivity with tolerance."""
+        return (round(pt[0] / tol), round(pt[1] / tol))
+
+    def rebuild_graph(self, tol=None):
+        """Build a directed graph where edges follow segment direction (start -> end)."""
+        tol = tol or self.graph_tol
+        start_map = {}
+        end_map = {}
+        for seg_id, idx in self.segment_by_id.items():
+            seg = self.segments[idx]
+            if not seg.points:
+                continue
+            start_key = self._point_key(seg.points[0], tol)
+            end_key = self._point_key(seg.points[-1], tol)
+            start_map.setdefault(start_key, []).append(seg_id)
+            end_map.setdefault(end_key, []).append(seg_id)
+
+        graph = {sid: [] for sid in self.segment_by_id}
+        for end_key, from_list in end_map.items():
+            to_list = start_map.get(end_key, [])
+            for u in from_list:
+                for v in to_list:
+                    if u == v:
+                        continue
+                    cost = self.segments[self.segment_by_id[v]].get_length()
+                    graph[u].append((v, cost))
+
+        self.graph = graph
+        self._graph_dirty = False
+        return start_map, end_map
+
+    def _dijkstra_path(self, start_seg_id, end_seg_id):
+        import heapq
+
+        dist = {start_seg_id: 0.0}
+        prev = {}
+        heap = [(0.0, start_seg_id)]
+
+        while heap:
+            cur_dist, u = heapq.heappop(heap)
+            if u == end_seg_id:
+                break
+            if cur_dist != dist.get(u, float("inf")):
+                continue
+            for v, cost in self.graph.get(u, []):
+                alt = cur_dist + cost
+                if alt < dist.get(v, float("inf")):
+                    dist[v] = alt
+                    prev[v] = u
+                    heapq.heappush(heap, (alt, v))
+
+        if end_seg_id not in prev and end_seg_id != start_seg_id:
+            return None, None
+
+        path = [end_seg_id]
+        while path[-1] != start_seg_id:
+            path.append(prev[path[-1]])
+        path.reverse()
+        return path, dist.get(end_seg_id, 0.0)
+
+    def shortest_path(self, start_seg_id, end_seg_id):
+        """Return a list of segment ids forming the shortest directed path (by length).
+
+        If no path is found with the current tolerance, retry once with a looser
+        tolerance (5x) before failing to help with near-miss endpoints.
+        """
+        if start_seg_id not in self.segment_by_id:
+            raise ValueError(f"Unknown start segment id '{start_seg_id}'")
+        if end_seg_id not in self.segment_by_id:
+            raise ValueError(f"Unknown end segment id '{end_seg_id}'")
+
+        if self._graph_dirty:
+            self.rebuild_graph()
+
+        if start_seg_id == end_seg_id:
+            return [start_seg_id]
+
+        path, _ = self._dijkstra_path(start_seg_id, end_seg_id)
+        if path is not None:
+            return path
+
+        # Retry with looser tolerance
+        loose_tol = self.graph_tol * 5
+        self.rebuild_graph(loose_tol)
+        path, _ = self._dijkstra_path(start_seg_id, end_seg_id)
+        if path is not None:
+            print(f"[routing] rebuilt graph with tol={loose_tol} to connect {start_seg_id}->{end_seg_id}")
+            return path
+
+        # Diagnostics: show endpoint distances to help debugging
+        start_seg = self.segments[self.segment_by_id[start_seg_id]]
+        end_seg = self.segments[self.segment_by_id[end_seg_id]]
+        start_endpt = start_seg.points[-1]
+        end_startpt = end_seg.points[0]
+        msg = (
+            f"No path found from '{start_seg_id}' to '{end_seg_id}'. "
+            f"End of start {start_endpt}, start of end {end_startpt}, tol tried {self.graph_tol} and {loose_tol}."
+        )
+        raise ValueError(msg)
+
+    def prepare_vehicle_path(self, veh):
+        """Ensure vehicle.path is resolved; auto-route if start/end are provided."""
+        if (not veh.path or len(veh.path) == 0) and veh.start_segment and veh.end_segment:
+            veh.path = self.shortest_path(veh.start_segment, veh.end_segment)
+        if not veh.path:
+            raise ValueError("Vehicle has no path and no start/end routing information")
+        veh.path = self.resolve_path(veh.path)
+
+        # Log chosen path with length for diagnostics (helpful to compare alternatives)
+        try:
+            total_len = sum(self.segments[idx].get_length() for idx in veh.path)
+            print(
+                f"[routing] class={getattr(veh, 'vehicle_class', None)} "
+                f"start={veh.start_segment} end={veh.end_segment} "
+                f"path_ids={[self.segments[i].id for i in veh.path]} "
+                f"length={total_len:.2f}"
+            )
+        except Exception:
+            # Do not fail simulation because of logging
+            pass
+
+        return veh.path
 
     def resolve_path(self, path_spec):
         """Return list of segment indices from a path specification.

@@ -40,6 +40,8 @@ class Vehicle:
         # Path info
         self.path = []
         self.current_road_index = 0
+        self.start_segment = None  # optional segment id for auto-routing
+        self.end_segment = None    # optional segment id for auto-routing
 
         # Kinematics
         self.x = 0

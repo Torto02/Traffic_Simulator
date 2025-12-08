@@ -1,0 +1,98 @@
+{
+  "ui": {
+    "title": "Test",
+    "width": 1280,
+    "height": 720,
+    "background_color": [245, 245, 245]
+  },
+  "segments": [
+    {
+      "id": "rettilineo1",
+      "type": "segment",
+      "start": [-150, 0],
+      "end": [150, 0],
+      "category": "general"
+    },
+    {
+      "id": "rettilineo2",
+      "type": "segment",
+      "start": [0, 150],
+      "end": [0, -150],
+      "category": "general"
+    },
+    {
+      "id": "rettilineo3",
+      "type": "segment",
+      "start": [200, 0],
+      "end": [300, 0],
+      "category": "general"
+    },
+    {
+      "id": "curva1",
+      "type": "quadratic",
+      "start": [150, 0],
+      "control": [170, 80],
+      "end": [200, 0],
+      "category": "general"
+    },
+    {
+      "id": "curva2",
+      "type": "quadratic",
+      "start": [150, 0],
+      "control": [170, 40],
+      "end": [200, 0],
+      "category": "general"
+    }
+  ],
+  "vehicle_generators": [
+    {
+      "vehicle_rate": 18,
+      "vehicles": [
+        [
+          6,
+          {
+            "start_segment": "rettilineo1",
+            "end_segment": "rettilineo3",
+            "v": 14,
+            "vehicle_class": "vehicle"
+          }
+        ],
+        [
+          5,
+          {
+            "start_segment": "rettilineo2",
+            "end_segment": "rettilineo2",
+            "v": 12,
+            "vehicle_class": "ev"
+          }
+        ]
+      ]
+    }
+  ],
+  "junctions": [
+    {
+      "id": "main_cross",
+      "approaches": [
+        {
+          "segment_id": "rettilineo1",
+          "offset": 0.5,
+          "type": "light",
+          "green": 20,
+          "red": 20
+        },
+        {
+          "segment_id": "rettilineo2",
+          "offset": 0.5,
+          "type": "light",
+          "green": 20,
+          "red": 20
+        },
+        {
+          "segment_id": "curva1",
+          "offset": 0.0,
+          "type": "stop"
+        }
+      ]
+    }
+  ]
+}

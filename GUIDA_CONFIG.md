@@ -88,6 +88,7 @@ Campi chiave:
 - `vehicle_class`: `vehicle`, `truck`, `bus`, `tank`, `ev` (influenza colore/shape di default).
 - `color`, `shape`: opzionali, per override (`shape` supporta `rect`, `triangle`, `circle`).
 - Parametri dinamici opzionali: `l` (lunghezza), `s0` (distanza min), `T` (headway), `v_max`, `a_max`, `b_max`.
+- `start_segment`, `end_segment`: opzionali; se `path` e' vuoto, il simulatore calcola automaticamente il percorso piu' corto tra questi segmenti seguendo il verso start->end di ogni strada.
 
 Esempio:
 
@@ -106,6 +107,7 @@ Campi chiave:
 
 - `vehicle_rate`: veicoli per minuto.
 - `vehicles`: lista di coppie `[peso, config]`, dove `peso` e' la probabilita' relativa e `config` e' identico a quello di un veicolo singolo.
+  - Anche qui puoi usare `start_segment` e `end_segment` invece di `path` per auto-routing.
 
 Esempio:
 
@@ -276,6 +278,7 @@ Esempio:
 ## Suggerimenti pratici
 
 - Usa sempre `id` sui segmenti per costruire percorsi leggibili.
+- Se vuoi il percorso automatico piu' corto, ometti `path` e indica `start_segment` e `end_segment` (il senso di marcia e' dal primo all'ultimo punto di ciascun segmento; i segmenti si collegano quando l'endpoint di uno coincide con lo startpoint del successivo).
 - Mantieni le coordinate in metri; le curve Bezier vengono discretizzate automaticamente.
 - Imposta `direction_hint: true` per visualizzare la direzione di marcia.
 - Se compare un errore "no points/start/end defined", assicurati di fornire `points` o la coppia `start`/`end`.

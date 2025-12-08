@@ -1,0 +1,227 @@
+{
+  "ui": {
+    "title": "Paese Due Incroci",
+    "width": 1280,
+    "height": 720,
+    "background_color": [245, 245, 245]
+  },
+  "segments": [
+    {
+      "id": "west_in",
+      "type": "segment",
+      "start": [-150, 0],
+      "end": [0, 0],
+      "category": "general"
+    },
+    {
+      "id": "west_out",
+      "type": "segment",
+      "start": [0, 0],
+      "end": [-150, 0],
+      "category": "general"
+    },
+
+    {
+      "id": "mid_east",
+      "type": "segment",
+      "start": [0, 0],
+      "end": [120, 0],
+      "category": "general"
+    },
+    {
+      "id": "east_mid",
+      "type": "segment",
+      "start": [120, 0],
+      "end": [0, 0],
+      "category": "general"
+    },
+
+    {
+      "id": "east_out",
+      "type": "segment",
+      "start": [120, 0],
+      "end": [240, 0],
+      "category": "general"
+    },
+    {
+      "id": "east_in",
+      "type": "segment",
+      "start": [240, 0],
+      "end": [120, 0],
+      "category": "general"
+    },
+
+    {
+      "id": "south_in",
+      "type": "segment",
+      "start": [0, -120],
+      "end": [0, 0],
+      "category": "general"
+    },
+    {
+      "id": "south_out",
+      "type": "segment",
+      "start": [0, 0],
+      "end": [0, -120],
+      "category": "general"
+    },
+
+    {
+      "id": "north_in",
+      "type": "segment",
+      "start": [0, 120],
+      "end": [0, 0],
+      "category": "general"
+    },
+    {
+      "id": "north_out",
+      "type": "segment",
+      "start": [0, 0],
+      "end": [0, 120],
+      "category": "general"
+    },
+
+    {
+      "id": "plaza_n_in",
+      "type": "segment",
+      "start": [120, 120],
+      "end": [120, 0],
+      "category": "general"
+    },
+    {
+      "id": "plaza_n_out",
+      "type": "segment",
+      "start": [120, 0],
+      "end": [120, 120],
+      "category": "general"
+    },
+
+    {
+      "id": "plaza_s_in",
+      "type": "segment",
+      "start": [120, -120],
+      "end": [120, 0],
+      "category": "general"
+    },
+    {
+      "id": "plaza_s_out",
+      "type": "segment",
+      "start": [120, 0],
+      "end": [120, -120],
+      "category": "general"
+    }
+  ],
+
+  "vehicle_generators": [
+    {
+      "vehicle_rate": 18,
+      "vehicles": [
+        [
+          6,
+          {
+            "start_segment": "west_in",
+            "end_segment": "plaza_n_out",
+            "v": 14,
+            "vehicle_class": "vehicle"
+          }
+        ],
+        [
+          5,
+          {
+            "start_segment": "south_in",
+            "end_segment": "east_out",
+            "v": 12,
+            "vehicle_class": "ev"
+          }
+        ],
+        [
+          3,
+          {
+            "start_segment": "east_in",
+            "end_segment": "north_out",
+            "v": 12,
+            "vehicle_class": "bus",
+            "l": 8
+          }
+        ],
+        [
+          2,
+          {
+            "start_segment": "plaza_s_in",
+            "end_segment": "west_out",
+            "v": 11,
+            "vehicle_class": "truck"
+          }
+        ]
+      ]
+    }
+  ],
+
+  "vehicles": [],
+
+  "environment": [
+    { "type": "tree", "position": [-60, 20], "size": 3 },
+    { "type": "tree", "position": [60, -20], "size": 3 },
+    {
+      "type": "building",
+      "position": [-40, 60],
+      "size": 6,
+      "color": [190, 190, 210]
+    },
+    {
+      "type": "building",
+      "position": [160, 40],
+      "size": 6,
+      "color": [185, 185, 205]
+    },
+    { "type": "rsu", "position": [0, 0], "size": 2.5 },
+    { "type": "vru", "position": [110, -10], "size": 2 }
+  ],
+
+  "events": [],
+
+  "junctions": [
+    {
+      "id": "main_square",
+      "approaches": [
+        {
+          "segment_id": "west_in",
+          "offset": 1.0,
+          "type": "light",
+          "green": 18,
+          "red": 18
+        },
+        {
+          "segment_id": "east_mid",
+          "offset": 1.0,
+          "type": "light",
+          "green": 18,
+          "red": 18
+        },
+        {
+          "segment_id": "south_in",
+          "offset": 1.0,
+          "type": "light",
+          "green": 18,
+          "red": 18
+        },
+        {
+          "segment_id": "north_in",
+          "offset": 1.0,
+          "type": "light",
+          "green": 18,
+          "red": 18
+        }
+      ]
+    },
+    {
+      "id": "plaza",
+      "approaches": [
+        { "segment_id": "mid_east", "offset": 1.0, "type": "yield" },
+        { "segment_id": "east_in", "offset": 1.0, "type": "yield" },
+        { "segment_id": "plaza_n_in", "offset": 1.0, "type": "yield" },
+        { "segment_id": "plaza_s_in", "offset": 1.0, "type": "yield" }
+      ]
+    }
+  ]
+}
