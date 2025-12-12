@@ -76,6 +76,12 @@ class Vehicle:
         self._v_max = self.v_max
 
     def update(self, lead, dt):
+        # If target max speed is zero (e.g., red light stop), hold position
+        if self.v_max <= 1e-6:
+            self.a = 0
+            self.v = 0
+            return
+
         # Update position and velocity
         if self.v + self.a*dt < 0:
             self.x -= 1/2*self.v*self.v/self.a

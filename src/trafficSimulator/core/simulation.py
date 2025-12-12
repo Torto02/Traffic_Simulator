@@ -239,12 +239,14 @@ class Simulation:
         for seg_idx, segment in enumerate(self.segments):
             if len(segment.vehicles) != 0:
                 lead = self.vehicles[segment.vehicles[0]]
-                lead.v_max = lead._v_max * self._compute_speed_factor(seg_idx, lead)
+                factor = self._compute_speed_factor(seg_idx, lead)
+                lead.v_max = lead._v_max * factor
                 lead.update(None, self.dt)
             for i in range(1, len(segment.vehicles)):
                 veh = self.vehicles[segment.vehicles[i]]
                 lead = self.vehicles[segment.vehicles[i-1]]
-                veh.v_max = veh._v_max * self._compute_speed_factor(seg_idx, veh)
+                factor = self._compute_speed_factor(seg_idx, veh)
+                veh.v_max = veh._v_max * factor
                 veh.update(lead, self.dt)
 
         # Check roads for out of bounds vehicle
@@ -353,7 +355,8 @@ class Simulation:
         slow_dist = 40.0  # generic slowdown near junction
         light_slow_dist = 35.0  # start braking for a red light from this distance
         light_stop_dist = 6.0   # stop distance for a red light
-        stop_factor = 0.1
+        light_stop_factor = 0.0  # full stop at red when close
+        yield_stop_factor = 0.1
         yield_factor = 0.2
 
         # Heading at position helper
@@ -377,13 +380,13 @@ class Simulation:
                 phase = appr.get("phase", "green")
                 if phase != "green" and dist_to >= 0:
                     if dist_to <= light_stop_dist:
-                        factor = min(factor, stop_factor)
+                        factor = min(factor, light_stop_factor)
                     elif dist_to <= light_slow_dist:
                         factor = min(factor, 0.4)
             else:  # yield / merge priority-to-right
                 if dist_to >= 0:
                     if self._has_vehicle_with_priority(appr, seg_idx, vehicle, dist_to, heading_at(offset)):
-                        factor = min(factor, stop_factor)
+                        factor = min(factor, yield_stop_factor)
                     else:
                         factor = min(factor, yield_factor if dist_to < slow_dist else factor)
 
