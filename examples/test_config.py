@@ -4,7 +4,7 @@ from pathlib import Path
 
 if __name__ == "__main__":
     # Choose which config to run: "config_sample.json" or "config_city.json"
-    config_name = "config.json"
+    config_name = "city.json"
     config_path = Path(__file__).with_name(config_name)
 
     sim, ui_cfg = ts.load_simulation_from_json(config_path)

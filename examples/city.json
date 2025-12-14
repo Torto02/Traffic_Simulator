@@ -1,0 +1,78 @@
+{
+  "ui": {
+    "title": "City",
+    "width": 1280,
+    "height": 720,
+    "background_color": [245, 245, 245]
+  },
+  "segments": [
+    {
+      "id": "main",
+      "type": "segment",
+      "start": [-150, 0],
+      "end": [150, 0],
+      "category": "general"
+    },
+    {
+      "id": "exchage_lane",
+      "type": "segment",
+      "start": [50, 0],
+      "end": [60, 0],
+      "category": "taxi"
+    },
+    {
+      "id": "secondary_road",
+      "type": "segment",
+      "start": [90, 4],
+      "end": [120, 4],
+      "category": "taxi"
+    },
+    {
+      "id": "tre",
+      "type": "segment",
+      "start": [0, 50],
+      "end": [0, 150],
+      "category": "general"
+    },
+    {
+      "id": "curva",
+      "type": "quadratic",
+      "start": [-50, 0],
+      "connect_to": "tre",
+      "control": [0, 10],
+      "category": "general"
+    },
+    {
+      "id": "curvetta",
+      "type": "quadratic",
+      "connect_from": "exchage_lane",
+      "connect_to": "secondary_road",
+      "auto_control": true,
+      "category": "taxi"
+    }
+  ],
+  "junctions": [
+    {
+      "id": "junction_1",
+      "type": "junction",
+      "segments": ["main", "tre"]
+    }
+  ],
+
+  "vehicle_generators": [
+    {
+      "vehicle_rate": 12,
+      "vehicles": [
+        [
+          4,
+          {
+            "start_segment": "main",
+            "end_segment": "tre",
+            "v": 12,
+            "vehicle_class": "vehicle"
+          }
+        ]
+      ]
+    }
+  ]
+}

@@ -188,7 +188,7 @@ class Window:
         if self.is_dragging:
             self.offset = (
                 self.old_offset[0] + app_data[1]/self.zoom,
-                self.old_offset[1] + app_data[2]/self.zoom
+                self.old_offset[1] - app_data[2]/self.zoom
             )
 
     def mouse_release(self):
@@ -221,13 +221,13 @@ class Window:
     def to_screen(self, x, y):
         return (
             self.canvas_width/2 + (x + self.offset[0] ) * self.zoom,
-            self.canvas_height/2 + (y + self.offset[1]) * self.zoom
+            self.canvas_height/2 - (y + self.offset[1]) * self.zoom
         )
 
     def to_world(self, x, y):
         return (
             (x - self.canvas_width/2) / self.zoom - self.offset[0],
-            (y - self.canvas_height/2) / self.zoom - self.offset[1] 
+            -(y - self.canvas_height/2) / self.zoom - self.offset[1]
         )
     
     @property
@@ -305,7 +305,7 @@ class Window:
                 if not self.show_arrows:
                     continue
                 mid_point = segment.get_point(0.5)
-                heading = segment.get_heading(0.5)
+                heading = -segment.get_heading(0.5)  # invert to compensate flipped Y scale
                 arrow_len = max(2.5, (segment.width if hasattr(segment, "width") else 3.5) * 1.1)
                 dx = cos(heading) * arrow_len
                 dy = sin(heading) * arrow_len
@@ -320,7 +320,7 @@ class Window:
                 progress = vehicle.x / segment.get_length()
 
                 position = segment.get_point(progress)
-                heading = segment.get_heading(progress)
+                heading = -segment.get_heading(progress)  # compensate Y flip
 
                 node = dpg.add_draw_node(parent="Canvas")
 
@@ -443,7 +443,7 @@ class Window:
     def apply_transformation(self):
         screen_center = dpg.create_translation_matrix([self.canvas_width/2, self.canvas_height/2, -0.01])
         translate = dpg.create_translation_matrix(self.offset)
-        scale = dpg.create_scale_matrix([self.zoom, self.zoom])
+        scale = dpg.create_scale_matrix([self.zoom, -self.zoom])
         dpg.apply_transform("Canvas", screen_center*scale*translate)
 
 

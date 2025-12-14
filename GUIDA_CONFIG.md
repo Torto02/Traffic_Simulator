@@ -43,6 +43,11 @@ Tipi di segmenti:
    - Punti: `start`, `control`, `end`.
 3. **Curva di Bezier cubica (type "cubic")**
    - Punti: `start`, `control_1`, `control_2`, `end`.
+4. **Curva quadratica con aggancio/controllo automatico (type "quadratic" + auto_control)**
+
+- `connect_from` (opzionale): id di un segmento esistente; lo start della curva viene agganciato all'endpoint di quel segmento.
+- `connect_to` (opzionale): id di un segmento esistente; l'end della curva viene agganciato allo start di quel segmento (oppure all'endpoint se `connect_to_end: true`).
+- `auto_control: true` (opzionale): calcola automaticamente il punto di controllo seguendo la direzione finale di `connect_from` e una distanza proporzionale (`control_scale`, default 0.35) con una componente laterale (`control_offset`, default 0.25). Puoi fornire `control` per override manuale.
 
 Esempi:
 
@@ -50,6 +55,14 @@ Esempi:
 {
   "segments": [
     { "id": "dritta", "type": "segment", "start": [0, 0], "end": [100, 0] },
+    {
+      "id": "curva_auto",
+      "type": "quadratic",
+      "connect_from": "dritta",
+      "end": [160, 40],
+      "auto_control": true,
+      "control_scale": 0.3
+    },
     {
       "id": "spezzata",
       "type": "segment",

@@ -23,8 +23,8 @@
     {
       "id": "rettilineo3",
       "type": "segment",
-      "start": [300, 0],
-      "end": [200, 0],
+      "start": [200, 0],
+      "end": [300, 0],
       "category": "general"
     },
     {

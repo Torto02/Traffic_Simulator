@@ -1,6 +1,7 @@
 MANIFEST.in
 pyproject.toml
 requirements.txt
+examples/city.json
 examples/config.json
 examples/config_city.json
 examples/config_sample.json
